@@ -22,6 +22,11 @@ metavar f ::=
       {{ coq string }}
       {{ coq-equality }}
       {{ com function name }}
+metavar c ::=
+      {{ lex alphanum }}
+      {{ coq string }}
+      {{ coq-equality }}
+      {{ com constant name }}
 metavar P ::=
      {{ lex alphanum }}
      {{ coq string }}
@@ -40,7 +45,8 @@ grammar
 t :: t_ ::=
   {{ com term }}
   | x :: :: var
-  | f ( t1 , .. , tn ) :: :: f
+  | c :: :: const
+  | f ( t1 , .. , tn ) :: :: func
 
 fm {{ tex \phi }} :: fm_ ::=
      {{ com first-order formula }}
@@ -51,7 +57,7 @@ fm {{ tex \phi }} :: fm_ ::=
      | fm \/ fm' :: :: or
      | fm -> fm' :: :: imp
      | \-/ x fm :: :: forall (+ bind x in fm +)
-     | -] x fm :: :: exists (+ bind x in fm +)
+     | -] x fm :: :: ex (+ bind x in fm +)
      | _|_ :: :: cont
      | ( fm ) :: S :: parentheses
        {{ coq ([[fm]]) }}
@@ -243,14 +249,14 @@ defn
 
   last ( proof ) = l fm justification
   [] , fmlist |- proof
-  ------------------------------------- :: claim
+  ----------------------------------- :: claim
   fmlist |- fm proof
      
 defn
   G , fmlist |- proof :: :: valid_proof :: vp_
     {{ com valid proof }} by
   
-  ------------------ :: empty
+  ---------------- :: empty
   G , fmlist |- ()
 
   :valid_derivation: G , fmlist |- l fm justification
@@ -261,7 +267,7 @@ defn
   last ( l fm assumption proof ) = l' fm' reason
   G [ l |-> fm ] , fmlist |- proof
   G [ ( l , l' ) |-> ( fm , fm' ) ] , fmlist |- proof'
-  ---------------------------------------------------- :: box
+  ---------------------------------------------------- :: box_imp
   G , fmlist |- [ l fm assumption proof ] proof'
 
   last ( proof ) = l' fm' reason
@@ -275,7 +281,6 @@ defn
   G [ ( l , l' ) |-> ( x , fm , fm' ) ] , fmlist |- proof'
   -------------------------------------------------------- :: box_ex
   G , fmlist |- [ l x fm assumption proof ] proof'
-  
 
 defn
   G , fmlist |- derivation :: :: valid_derivation :: vd_
