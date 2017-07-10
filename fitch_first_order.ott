@@ -1,0 +1,390 @@
+embed 
+{{ coq
+Require Export dyadic_ordered.
+Require Export FMapInterface.
+
+Require Export String.
+Require Import Ascii.
+Hint Resolve ascii_dec : ott_coq_equality.
+
+Module FitchFirstOrder
+ (ST : SpecType) (SUOT : SpecUsualOrderedType ST)
+ (DST : DyadicSpecType ST) (SUOTD : SpecUsualOrderedType DST)
+ (Map : FMapInterface.S with Module E := SUOTD).
+}}
+metavar x ::=
+      {{ lex alphanum }}
+      {{ coq string }}
+      {{ coq-equality }}
+      {{ com variable }}
+metavar f ::=
+      {{ lex alphanum }}
+      {{ coq string }}
+      {{ coq-equality }}
+      {{ com function name }}
+metavar P ::=
+     {{ lex alphanum }}
+     {{ coq string }}
+     {{ coq-equality }}
+     {{ com predicate name }}
+metavar l ::=
+      {{ lex numeral }}
+      {{ coq SUOT.t }}
+      {{ com proof entry label }}
+indexvar n ::= 
+      {{ lex numeral }}
+      {{ coq nat }}
+      {{ coq-equality }}
+      {{ com index variable (subscript) }}
+grammar
+t :: t_ ::=
+  {{ com term }}
+  | x :: :: var
+  | f ( t1 , .. , tn ) :: :: f
+
+fm {{ tex \phi }} :: fm_ ::=
+     {{ com first-order formula }}
+     | P ( t1 , .. , tn ) :: :: pred
+     | t = t' :: :: eq
+     | ~ fm :: :: neg
+     | fm /\ fm' :: :: and
+     | fm \/ fm' :: :: or
+     | fm -> fm' :: :: imp
+     | \-/ x fm :: :: forall (+ bind x in fm +)
+     | -] x fm :: :: exists (+ bind x in fm +)
+     | _|_ :: :: cont
+     | ( fm ) :: S :: parentheses
+       {{ coq ([[fm]]) }}
+     | fm [ t / x ] :: M :: subst
+       {{ coq (tsubst_fm [[t]] [[x]] [[fm]]) }}
+
+fmlist {{ tex \overline{\phi} }} :: fmlist_ ::=
+	{{ com list of first-order formulas }}
+	| fm1 , .. , fmn :: :: list
+
+claim :: claim_ ::=
+      {{ com claim }}
+      {{ coq-universe Type }}
+      | judgment proof :: :: judgment_proof
+
+judgment :: judgment_ ::=
+	 {{ com judgment }}
+	 | fmlist |- fm :: :: follows
+
+proof {{ tex \rho }} :: proof_ ::=
+      {{ com proof }}
+      {{ coq-universe Type }}
+      | entry1 .. entryn :: :: entries
+      | () :: M :: empty
+        {{ coq (proof_entries nil) }}
+      | entry proof :: M :: entry
+        {{ coq (proof_entries (cons [[entry]] (proof_list_entry [[proof]]))) }}
+
+entry :: entry_ ::=
+      {{ com proof entry }}
+      {{ coq-universe Type }}
+      | derivation :: :: derivation
+      | [ proof ] :: :: box
+      | invalid :: :: invalid
+      | last ( proof ) :: M :: last
+        {{ com last entry in proof }}
+	{{ coq (last (proof_list_entry [[proof]]) entry_invalid) }}
+
+derivation :: derivation_ ::=
+	   {{ com derivation in proof }}
+	   {{ coq-universe Type }}
+	   | l fm reason :: :: deriv
+	     {{ tex [[l]]\; [[fm]]\;\; [[reason]] }}
+	   | l x :: :: var
+	     {{ tex [[l]]\; [[x]] }}
+	   | l x fm assumption :: :: var_assumption
+	     {{ tex [[l]]\; [[x]]\; [[fm]]\;\; [[assumption]] }}
+
+% maybe skip reason and move everything to derivation?
+reason :: reason_ ::=
+       {{ coq-universe Type }}
+       | assumption :: :: assumption
+       | justification :: :: justification
+
+justification :: justification_ ::=
+     {{ com derivation justification }}
+     {{ coq-universe Type }}
+    | premise :: :: premise
+    | lem :: :: lem
+    | copy l :: :: copy
+    | /\i l , l' :: :: andi
+    | /\e1 l :: :: ande1
+    | /\e2 l :: :: ande2
+    | \/i1 l :: :: ori1
+    | \/i2 l :: :: ori2
+    | ->e l , l' :: :: impe
+    | ~e l , l' :: :: nege
+    | _|_e l :: :: conte
+    | ~~i l :: :: negnegi
+    | ~~e l :: :: negnege
+    | mt l , l' :: :: mt
+    | ->i l - l' :: :: impi
+    | ~i l - l' :: :: negi
+    | \/e l1 , l2 - l3 , l4 - l5 :: :: ore
+    | pbc l - l' :: :: pbc
+    | =i :: :: eqi
+    | =e l , l' :: :: eqe
+    | \-/xi l - l' :: :: alli
+    | \-/xe l :: :: alle
+    | -]xi l :: :: exi
+    | -]xe l1 , l2 - l3 :: :: exe
+
+terminals :: terminals_ ::=
+	  | premise :: :: premise {{ tex \mathrm{premise} }}
+     	  | lem :: :: lem {{ tex \mathrm{LEM} }}
+	  | copy :: :: copy {{ tex \mathrm{copy} }}
+	  | /\i :: :: andi {{ tex \land i\, }}
+	  | /\e1 :: :: ande1 {{ tex \land e_1\, }}
+	  | /\e2 :: :: ande2 {{ tex \land e_2\, }}
+	  | \/i1 :: :: ori1 {{ tex \lor i_1\, }}
+	  | \/i2 :: :: ori2 {{ tex \lor i_2\, }}
+	  | ->e :: :: impe {{ tex \rightarrow\!\!e\, }}
+	  | ~e :: :: nege {{ tex \lnot e\, }}
+	  | _|_e :: :: conte {{ tex \bot e\, }}
+	  | ~~i :: :: negnegi {{ tex \lnot\lnot i\, }}
+	  | ~~e :: :: negnege {{ tex \lnot\lnot e\, }}
+     	  | mt :: :: mt {{ tex \mathrm{MT} }}
+	  | ->i :: :: impi {{ tex \rightarrow\!\!i\, }}
+	  | ~i :: :: negi {{ tex \lnot i\, }}
+	  | \/e :: :: ore {{ tex \lor\!e\, }}
+     	  | pbc :: :: pbc {{ tex \mathrm{PBC} }}
+	  | \-/xi :: :: foralxi {{ tex \forall x i\, }}
+	  | \-/xe :: :: forallxe {{ tex \forall x e\, }}
+	  | -]xi :: :: existsxi {{ tex \exists x i\, }}
+	  | -]xe :: :: existsxe {{ tex \exists x e\, }}
+     	  | assumption :: :: assumption {{ tex \mathrm{assumption} }}
+	  | |- :: :: vdash {{ tex \vdash }}
+  	  | ~  :: :: neg {{ tex \lnot }}
+	  | /\  :: :: and {{ tex \land }}
+	  | \/ :: :: or {{ tex \lor }}
+	  | -> :: :: imp {{ tex \rightarrow }}
+	  | _|_ :: :: cont {{ tex \bot }}
+	  | in :: :: in {{ tex \in }}
+	  | |-> :: :: mapsto {{ tex \mapsto }}
+	  | last :: :: last {{ tex \mathrm{last} }}
+	  | invalid :: :: invalid {{ tex \mathrm{invalid} }}
+	  | \-/ :: :: forall {{ tex \forall }}
+	  | -] :: :: exists {{ tex \exists }}
+
+dyadicfm :: dyadicfm_ ::=
+	| fm :: :: fm
+	| ( fm , fm' ) :: :: fm_fm
+	| ( x , fm ) :: :: var_fm
+	| ( x , fm , fm' ) :: :: var_fm_fm
+
+G {{ tex \Gamma }} :: G_ ::=
+  {{ com admissible context }}
+  {{ coq Map.t dyadicfm }}
+  {{ coq-universe Type }}
+  | [] :: M :: empty
+    {{ coq (Map.empty dyadicfm) }}
+  | G [ l |-> fm ] :: M :: add_fm
+    {{ coq (Map.add (inl [[l]]) (dyadicfm_fm [[fm]]) [[G]]) }}
+  | G [ ( l , l' ) |-> ( fm , fm' ) ] :: M :: add_fm_fm
+    {{ coq (Map.add (inr ([[l]], [[l']])) (dyadicfm_fm_fm [[fm]] [[fm']]) [[G]]) }}
+  | G [ ( l , l' ) |-> ( x , fm ) ] :: M :: add_var_fm
+    {{ coq (Map.add (inr ([[l]], [[l']])) (dyadicfm_var_fm [[x]] [[fm]]) [[G]]) }}
+  | G [ ( l , l' ) |-> ( x , fm , fm' ) ] :: M :: add_var_fm_fm
+    {{ coq (Map.add (inr ([[l]], [[l']])) (dyadicfm_var_fm_fm [[x]] [[fm]] [[fm']]) [[G]]) }}
+
+formula :: formula_ ::=  
+	{{ com formulas }}
+	| judgement :: :: judgement
+	  {{ com judgement }}
+        | fm in fmlist :: M :: fm_in_fmlist
+	  {{ com first order formula in set of premises }}
+	  {{ coq (In [[fm]] (fmlist_list_fm [[fmlist]])) }}
+     	| G ( l ) = fm :: M :: G_fm
+          {{ com map label to fm }}
+	  {{ coq (Map.find (inl [[l]]) [[G]] = Some (dyadicfm_fm [[fm]])) }}
+	| G ( l , l' ) = ( fm , fm' ) :: M :: G_fm_fm
+	  {{ com map tuple of labels to tuple of fms }}
+	  {{ coq (Map.find (inr ([[l]], [[l']])) [[G]] = Some (dyadicfm_fm_fm [[fm]] [[fm']])) }}
+	| G ( l , l' ) = ( x , fm ) :: M :: G_var_fm
+	  {{ com map labels to variable and fm }}
+	  {{ coq (Map.find (inr ([[l]], [[l']])) [[G]] = Some (dyadicfm_var_fm [[x]] [[fm]])) }}
+	| G ( l , l' ) = ( x , fm , fm' ) :: M :: G_var_fm_fm
+	  {{ com map labels to variable and fms }}
+	  {{ coq (Map.find (inr ([[l]], [[l']])) [[G]] = Some (dyadicfm_var_fm_fm [[x]] [[fm]] [[fm']])) }}
+	| entry = entry' :: M :: entry_eq
+	  {{ com entry equality }}
+	  {{ coq [[entry]] = [[entry']] }}
+
+substitutions
+  single t x :: tsubst
+
+freevars
+  t x :: ftx
+
+embed
+{{ coq
+Definition proof_list_entry (proof5 : proof) : list entry :=
+match proof5 with 
+| proof_entries ls => ls
+end. 
+
+Definition fmlist_list_fm (fmlist5 : fmlist) : list fm :=
+match fmlist5 with
+| fmlist_list ls => ls
+end.
+}}
+
+defns
+  validity :: '' ::=
+
+defn 
+  claim :: :: valid_claim :: vc_
+  	{{ com valid claim }} by
+
+  last ( proof ) = l fm justification
+  [] , fmlist |- proof
+  ------------------------------------- :: claim
+  fmlist |- fm proof
+     
+defn
+  G , fmlist |- proof :: :: valid_proof :: vp_
+    {{ com valid proof }} by
+  
+  ------------------ :: empty
+  G , fmlist |- ()
+
+  :valid_derivation: G , fmlist |- l fm justification
+  G [ l |-> fm ] , fmlist |- proof
+  --------------------------------------------------- :: derivation
+  G , fmlist |- l fm justification proof
+
+  last ( l fm assumption proof ) = l' fm' reason
+  G [ l |-> fm ] , fmlist |- proof
+  G [ ( l , l' ) |-> ( fm , fm' ) ] , fmlist |- proof'
+  ---------------------------------------------------- :: box
+  G , fmlist |- [ l fm assumption proof ] proof'
+
+  last ( proof ) = l' fm' reason
+  G , fmlist |- proof
+  G [ ( l , l' ) |-> ( x , fm' ) ] , fmlist |- proof'
+  --------------------------------------------------- :: box_all
+  G , fmlist |- [ l x proof ] proof'
+
+  last ( proof ) = l' fm' reason
+  G [ l |-> fm ] , fmlist |- proof
+  G [ ( l , l' ) |-> ( x , fm , fm' ) ] , fmlist |- proof'
+  -------------------------------------------------------- :: box_ex
+  G , fmlist |- [ l x fm assumption proof ] proof'
+  
+
+defn
+  G , fmlist |- derivation :: :: valid_derivation :: vd_
+    	      {{ com valid derivation }} by
+
+  fm in fmlist
+  -------------------------- :: premise
+  G , fmlist |- l fm premise
+
+  ------------------------------ :: lem
+  G , fmlist |- l fm \/ ~ fm lem
+
+  G ( l' ) = fm
+  -------------------------- :: copy
+  G , fmlist |- l fm copy l'
+
+  G ( l' ) = _|_
+  -------------------------- :: conte
+  G , fmlist |- l fm _|_e l'
+
+  G ( l1 ) = fm
+  G ( l2 ) = fm'
+  ------------------------------------- :: andi
+  G , fmlist |- l fm /\ fm' /\i l1 , l2
+
+  G ( l' ) = fm /\ fm'
+  -------------------------- :: ande1
+  G , fmlist |- l fm /\e1 l'
+
+  G ( l' ) = fm /\ fm'
+  --------------------------- :: ande2
+  G , fmlist |- l fm' /\e2 l'
+
+  G ( l' ) = fm
+  --------------------------------- :: ori1
+  G , fmlist |- l fm \/ fm' \/i1 l'
+
+  G ( l' ) = fm'
+  --------------------------------- :: ori2
+  G , fmlist |- l fm \/ fm' \/i2 l'
+
+  G ( l1 ) = fm'
+  G ( l2 ) = fm' -> fm
+  ------------------------------ :: impe
+  G , fmlist |- l fm ->e l1 , l2
+
+  G ( l' ) = fm
+  ----------------------------- :: negnegi
+  G , fmlist |- l ~ ~ fm ~~i l'
+
+  G ( l' ) = ~ ~ fm
+  ------------------------- :: negnege
+  G , fmlist |- l fm ~~e l'
+
+  G ( l1 ) = fm -> fm'
+  G ( l2 ) = ~ fm'
+  ------------------------------- :: mt
+  G , fmlist |- l ~ fm mt l1 , l2
+
+  G ( l1 ) = fm
+  G ( l2 ) = ~ fm
+  ------------------------------ :: nege
+  G , fmlist |- l _|_ ~e l1 , l2
+
+  G ( l1 , l2 ) = ( fm , fm' ) 
+  ------------------------------------- :: impi
+  G , fmlist |- l fm -> fm' ->i l1 - l2
+
+  G ( l1 , l2 ) = ( fm , _|_ )
+  ------------------------------- :: negi
+  G , fmlist |- l ~ fm ~i l1 - l2
+
+  G ( l1 ) = fm \/ fm'
+  G ( l2 , l3 ) = ( fm , fm'' )
+  G ( l4 , l5 ) = ( fm' , fm'' )
+  ----------------------------------------------- :: ore
+  G , fmlist |- l fm'' \/e l1 , l2 - l3 , l4 - l5
+ 
+  G ( l1 , l2 ) = ( ~ fm , _|_ )
+  ------------------------------ :: pbc
+  G , fmlist |- l fm pbc l1 - l2
+
+  ------------------------ :: eqi
+  G , fmlist |- l t = t =i
+
+  % FIXME: need that t and t' are free for x in fm
+  G ( l1 ) = t = t'
+  G ( l2 ) = fm [ t / x ]
+  ---------------------------------------- :: eqe
+  G , fmlist |- l fm [ t' / x ] =e l1 , l2
+
+  G ( l' ) = \-/ x fm
+  ------------------------------------- :: alle
+  G , fmlist |- l fm [ t / x ] \-/xe l'
+  
+  G ( l' ) = fm [ t / x ]
+  ------------------------------- :: exi
+  G , fmlist |- l -] x fm -]xi l'
+
+  G ( l1 , l2 ) = ( x' , fm [ x' / x ] )
+  -------------------------------------- :: alli
+  G , fmlist |- l \-/ x fm \-/xi l1 - l2
+
+  G ( l1 ) = -] x fm
+  G ( l2 , l3 ) = ( x' , fm [ x' / x ] , fm' )
+  -------------------------------------------- :: exe
+  G , fmlist |- l fm' -]xe l1 , l2 - l3
+
+embed
+{{ coq
+End FitchFirstOrder.
+}}

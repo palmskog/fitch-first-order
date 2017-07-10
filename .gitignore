@@ -1,0 +1,14 @@
+*.aux
+*.vo
+*.d
+*.glob
+*.cmi
+*.cmo
+Makefile.coq
+Makefile.coq.bak
+fitch_first_order.v
+fitch_first_order.log
+fitch_first_order.tex
+fitch_first_order.aux
+fitch_first_order.pdf
+_CoqProject

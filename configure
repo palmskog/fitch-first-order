@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+DEPS=(Ott)
+EXTRA=(fitch_first_order.v)
+source coqproject.sh
