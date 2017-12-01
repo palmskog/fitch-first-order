@@ -6,6 +6,7 @@
 *.cmo
 Makefile.coq
 Makefile.coq.bak
+Makefile.coq.conf
 fitch_first_order.v
 fitch_first_order.log
 fitch_first_order.tex

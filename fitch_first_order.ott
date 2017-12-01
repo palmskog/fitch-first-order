@@ -1,16 +1,16 @@
 embed 
 {{ coq
-Require Export dyadic_ordered.
 Require Export FMapInterface.
+
+Require Export FitchFirstOrder.dyadic_ordered.
 
 Require Export String.
 Require Import Ascii.
 Hint Resolve ascii_dec : ott_coq_equality.
 
 Module FitchFirstOrder
- (ST : SpecType) (SUOT : SpecUsualOrderedType ST)
- (DST : DyadicSpecType ST) (SUOTD : SpecUsualOrderedType DST)
- (Map : FMapInterface.S with Module E := SUOTD).
+ (UOT : UsualOrderedType) (DUOT : DyadicUsualOrderedType UOT)
+ (Map : FMapInterface.S with Module E := DUOT).
 }}
 metavar x ::=
       {{ lex alphanum }}
@@ -34,7 +34,7 @@ metavar P ::=
      {{ com predicate name }}
 metavar l ::=
       {{ lex numeral }}
-      {{ coq SUOT.t }}
+      {{ coq UOT.t }}
       {{ com proof entry label }}
 indexvar n ::= 
       {{ lex numeral }}

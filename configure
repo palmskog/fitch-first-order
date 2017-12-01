@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+NAMESPACE__="FitchFirstOrder"
 DEPS=(Ott)
 EXTRA=(fitch_first_order.v)
 source coqproject.sh
